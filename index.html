@@ -1,0 +1,1724 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MEI · Controle de Horas</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f0f0f0;
+  --surface: #ffffff;
+  --surface2: #e8e8e8;
+  --border: #d0cfc8;
+  --gold: #a07828;
+  --gold-light: #c49a3a;
+  --gold-dim: #b89050;
+  --cream: #2a2520;
+  --red: #c04a3a;
+  --green: #3a7a4a;
+  --blue: #3a6f98;
+  --blue-light: #2a5f88;
+  --text: #1a1816;
+  --text-dim: #7a7567;
+  --radius: 12px;
+  --mono: 'JetBrains Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--surface2); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gold-dim); }
+
+/* ── LOGIN ── */
+#login-screen { display:none; position:fixed; inset:0; background:linear-gradient(135deg,#f5f3ef,#ede9e1); z-index:9999; align-items:center; justify-content:center; }
+#login-screen.open { display:flex; }
+.login-box { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:44px 40px; max-width:400px; width:92%; text-align:center; box-shadow:0 8px 40px rgba(0,0,0,0.12); }
+.login-logo { font-family:'Playfair Display',serif; font-size:26px; font-weight:900; color:var(--gold); margin-bottom:4px; }
+.login-logo span { color:var(--cream); }
+.login-sub { font-size:13px; color:var(--text-dim); margin-bottom:28px; }
+.login-field { display:flex; flex-direction:column; gap:5px; margin-bottom:14px; text-align:left; }
+.login-field label { font-size:11px; font-weight:600; color:var(--text-dim); letter-spacing:.5px; text-transform:uppercase; }
+.login-input { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:11px 14px; color:var(--text); font-family:'DM Sans',sans-serif; font-size:14px; outline:none; width:100%; transition:all .18s ease; }
+.login-input:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(160,120,40,.12); }
+.login-error { color:var(--red); font-size:12px; min-height:18px; margin-bottom:10px; }
+.login-btn { width:100%; padding:11px; border:none; border-radius:8px; background:var(--gold); color:#fff; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:700; cursor:pointer; transition:all .18s ease; box-shadow:0 2px 8px rgba(160,120,40,.25); }
+.login-btn:hover { background:var(--gold-light); box-shadow:0 4px 16px rgba(160,120,40,.35); transform:translateY(-1px); }
+
+/* ── HEADER ── */
+header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; padding:10px 24px; border-bottom:1px solid var(--border); background:var(--surface); box-shadow:0 2px 8px rgba(0,0,0,.06); position:sticky; top:0; z-index:100; }
+.logo { font-family:'Playfair Display',serif; font-size:20px; font-weight:900; color:var(--gold); white-space:nowrap; }
+.logo span { color:var(--cream); }
+nav { display:flex; gap:3px; flex-wrap:wrap; background:var(--surface2); padding:3px; border-radius:10px; border:1px solid var(--border); }
+nav button { padding:7px 12px; border:none; background:transparent; color:var(--text-dim); font-family:'DM Sans',sans-serif; font-size:12px; font-weight:500; border-radius:7px; cursor:pointer; white-space:nowrap; transition:all .18s ease; }
+nav button:hover { color:var(--text); background:rgba(0,0,0,.07); }
+nav button.active { background:var(--gold); color:#fff; font-weight:600; box-shadow:0 2px 8px rgba(160,120,40,.25); }
+.header-right { display:flex; align-items:center; gap:8px; }
+.user-info { display:flex; align-items:center; gap:7px; font-size:12px; color:var(--text-dim); }
+.user-info strong { color:var(--cream); font-size:13px; }
+.role-badge { font-size:10px; padding:2px 7px; border-radius:10px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; }
+.role-admin { background:rgba(160,120,40,.15); color:var(--gold); border:1px solid rgba(160,120,40,.3); }
+.role-operador { background:rgba(58,111,152,.12); color:var(--blue); border:1px solid rgba(58,111,152,.3); }
+.btn-logout { background:transparent; border:1px solid var(--border); color:var(--text-dim); padding:4px 10px; font-size:12px; border-radius:6px; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .18s ease; }
+.btn-logout:hover { border-color:var(--red); color:var(--red); }
+
+/* GitHub status bar in header */
+.gh-bar { display:flex; align-items:center; gap:6px; }
+#gh-status-hdr { font-size:11px; font-weight:600; white-space:nowrap; }
+.btn-gh { background:transparent; border:1px solid var(--border); color:var(--text-dim); padding:4px 9px; font-size:11px; border-radius:6px; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .18s ease; white-space:nowrap; }
+.btn-gh:hover { border-color:var(--blue); color:var(--blue); }
+
+/* ── MAIN ── */
+main { max-width:1300px; margin:0 auto; padding:28px 20px; }
+.page { display:none; }
+.page.active { display:block; }
+.page-title { font-family:'Playfair Display',serif; font-size:24px; font-weight:700; color:var(--cream); margin-bottom:3px; border-left:4px solid var(--gold); padding-left:11px; }
+.page-sub { font-size:13px; color:var(--text-dim); margin-bottom:20px; padding-left:15px; }
+
+/* ── CARD ── */
+.card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:16px; box-shadow:0 1px 4px rgba(0,0,0,.05); transition:box-shadow .2s; }
+.card:hover { box-shadow:0 4px 16px rgba(0,0,0,.09); }
+.card-title { font-family:'Playfair Display',serif; font-size:15px; color:var(--gold); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+.card-title::before { content:''; display:block; width:3px; height:14px; background:var(--gold); border-radius:2px; }
+
+/* ── STATS ── */
+.stats-row { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
+.stat-box { flex:1; min-width:120px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px; box-shadow:0 1px 4px rgba(0,0,0,.04); }
+.stat-box .val { font-family:'Playfair Display',serif; font-size:21px; color:var(--gold); font-weight:700; }
+.stat-box .val.green { color:var(--green); }
+.stat-box .val.blue { color:var(--blue); }
+.stat-box .val.red { color:var(--red); }
+.stat-box .lbl { font-size:11px; color:var(--text-dim); margin-top:2px; font-weight:500; }
+
+/* ── GRID ── */
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media(max-width:800px) { .grid2 { grid-template-columns:1fr; } }
+
+/* ── FORM ── */
+.field { display:flex; flex-direction:column; gap:4px; margin-bottom:12px; }
+.field label { font-size:11px; font-weight:600; color:var(--text-dim); letter-spacing:.5px; text-transform:uppercase; }
+input[type=text], input[type=number], input[type=password], input[type=time], select, textarea {
+  background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:8px 12px;
+  color:var(--text); font-family:'DM Sans',sans-serif; font-size:13px; outline:none; width:100%; transition:all .18s ease;
+}
+input:focus, select:focus, textarea:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(160,120,40,.10); }
+input.valid { border-color:var(--green); }
+input.invalid { border-color:var(--red); }
+.field-hint { font-size:11px; margin-top:2px; }
+.field-hint.ok { color:var(--green); }
+.field-hint.err { color:var(--red); }
+select option { background:var(--surface2); }
+
+/* ── BUTTONS ── */
+.btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border:none; border-radius:8px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; cursor:pointer; transition:all .18s ease; }
+.btn-gold { background:var(--gold); color:#fff; }
+.btn-gold:hover { background:var(--gold-light); }
+.btn-blue { background:var(--blue); color:#fff; }
+.btn-blue:hover { background:#5a8fb8; }
+.btn-ghost { background:transparent; border:1px solid var(--border); color:var(--text-dim); }
+.btn-ghost:hover { border-color:var(--gold-dim); color:var(--gold); }
+.btn-danger { background:transparent; border:1px solid var(--red); color:var(--red); padding:4px 10px; font-size:12px; }
+.btn-danger:hover { background:var(--red); color:#fff; }
+.btn-sm { padding:4px 10px; font-size:11px; }
+.btn-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
+.btn-danger-cfg { background:rgba(192,74,58,.06); border:1px solid rgba(192,74,58,.4); border-radius:7px; padding:7px 15px; color:var(--red); cursor:pointer; font-size:12px; font-family:'DM Sans',sans-serif; font-weight:600; transition:all .18s ease; }
+.btn-danger-cfg:hover { background:var(--red); color:#fff; }
+
+/* ── TABLE (fonte menor para Registro) ── */
+.tbl-wrap { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:auto; box-shadow:0 1px 4px rgba(0,0,0,.05); }
+table { width:100%; border-collapse:collapse; font-size:11px; min-width:820px; }
+th { text-align:left; padding:7px 9px; color:var(--text-dim); font-size:10px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; border-bottom:1px solid var(--border); background:var(--surface2); white-space:nowrap; }
+td { padding:6px 8px; border-bottom:1px solid rgba(0,0,0,.04); vertical-align:middle; }
+tr:hover td { background:rgba(0,0,0,.02); }
+tr:last-child td { border-bottom:none; }
+tr.we td { background:rgba(160,120,40,.04); }
+tr.fer td { background:rgba(192,74,58,.05); }
+tr.hj td { background:rgba(58,111,152,.06); }
+
+.ti { background:var(--surface2); border:1px solid var(--border); border-radius:5px; padding:4px 6px; color:var(--text); font-family:var(--mono); font-size:10px; width:74px; outline:none; transition:border-color .18s; }
+.ti:focus { border-color:var(--gold); }
+.obs-inp { background:var(--surface2); border:1px solid var(--border); border-radius:5px; padding:4px 6px; color:var(--text); font-size:11px; width:108px; outline:none; }
+.dn { font-size:11px; font-weight:700; letter-spacing:.4px; }
+.dn.sat { color:var(--gold); }
+.dn.sun { color:var(--red); }
+.hd { font-family:'Playfair Display',serif; font-size:12px; font-weight:700; color:var(--blue); }
+.vd { font-family:'Playfair Display',serif; font-size:12px; font-weight:700; color:var(--green); }
+.dp { color:var(--green); font-size:10px; font-weight:700; }
+.dn2 { color:var(--red); font-size:10px; font-weight:700; }
+.dz { color:var(--text-dim); font-size:10px; }
+
+.badge { display:inline-block; padding:2px 7px; border-radius:10px; font-size:10px; font-weight:600; }
+.badge-green { background:rgba(58,122,74,.10); color:var(--green); }
+.badge-red   { background:rgba(192,74,58,.10); color:var(--red); }
+.badge-blue  { background:rgba(58,111,152,.10); color:var(--blue); }
+.badge-gold  { background:rgba(160,120,40,.12); color:var(--gold); }
+
+/* ── CFG BANNER ── */
+.cfg-banner { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px 18px; margin-bottom:16px; display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; box-shadow:0 1px 4px rgba(0,0,0,.04); }
+.cfg-field { display:flex; flex-direction:column; gap:4px; }
+.cfg-label { font-size:10px; color:var(--text-dim); font-weight:600; letter-spacing:.5px; text-transform:uppercase; }
+
+/* ── RECIBO ── */
+.recibo-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:28px; max-width:660px; box-shadow:0 1px 4px rgba(0,0,0,.05); }
+.recibo-title { font-family:'Playfair Display',serif; font-size:22px; font-weight:700; color:var(--gold); margin-bottom:20px; border-bottom:1px solid var(--border); padding-bottom:12px; }
+.recibo-row { display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--border); }
+.rkey { color:var(--text-dim); font-size:11px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; }
+.rval { font-family:'Playfair Display',serif; font-size:15px; font-weight:600; color:var(--text); }
+.recibo-total { background:rgba(58,122,74,.07); border:1px solid rgba(58,122,74,.2); border-radius:8px; padding:14px; margin-top:14px; display:flex; justify-content:space-between; align-items:center; }
+.rt-lbl { font-size:12px; letter-spacing:1px; color:var(--green); font-weight:700; text-transform:uppercase; }
+.rt-val { font-family:'Playfair Display',serif; font-size:26px; font-weight:700; color:var(--green); }
+
+/* ── HISTÓRICO ── */
+.hist-row { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:12px 16px; margin-bottom:7px; display:grid; grid-template-columns:140px 1fr 1fr 1fr 1fr; gap:10px; align-items:center; box-shadow:0 1px 4px rgba(0,0,0,.04); transition:box-shadow .2s; }
+.hist-row:hover { box-shadow:0 4px 14px rgba(0,0,0,.08); }
+.hm { font-family:'Playfair Display',serif; font-size:14px; font-weight:700; color:var(--text); }
+.hv { display:flex; flex-direction:column; gap:2px; }
+.hl { font-size:10px; color:var(--text-dim); letter-spacing:.5px; text-transform:uppercase; font-weight:600; }
+.hn { font-family:'Playfair Display',serif; font-size:15px; font-weight:700; }
+.abar { height:4px; border-radius:3px; margin-top:4px; background:var(--surface2); overflow:hidden; }
+.afill { height:100%; border-radius:3px; background:linear-gradient(90deg,var(--gold),var(--green)); transition:width .5s; }
+
+/* ── CONFIG PANEL ── */
+.cfg-panel { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:24px; max-width:580px; box-shadow:0 1px 4px rgba(0,0,0,.05); }
+.cfg-g { display:grid; grid-template-columns:1fr 1fr; gap:11px; }
+.cfg-full { grid-column:1/-1; }
+.cfg-sep { grid-column:1/-1; border:none; border-top:1px solid var(--border); margin:4px 0; }
+
+/* ── PRESTADORES SCREEN ── */
+#sc-prov { display:none; position:fixed; inset:0; background:linear-gradient(135deg,#f5f3ef,#ede9e1); z-index:8000; align-items:center; justify-content:center; }
+#sc-prov.open { display:flex; }
+.prov-box { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:28px 32px; width:580px; max-width:95vw; max-height:92vh; overflow-y:auto; box-shadow:0 8px 40px rgba(0,0,0,.12); }
+.prov-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+.prov-title { font-family:'Playfair Display',serif; font-size:20px; font-weight:700; color:var(--gold); }
+.prov-sub { color:var(--text-dim); font-size:13px; margin-bottom:18px; }
+.prov-lista { display:flex; flex-direction:column; gap:8px; margin-bottom:18px; }
+.prov-vazio { text-align:center; padding:20px; color:var(--text-dim); font-size:13px; background:var(--surface2); border:1px dashed var(--border); border-radius:8px; }
+.prov-item { display:flex; align-items:center; gap:8px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:11px 13px; transition:all .2s; }
+.prov-item:hover { border-color:var(--gold-dim); box-shadow:0 2px 8px rgba(0,0,0,.07); }
+.prov-info { flex:1; }
+.prov-nome { font-family:'Playfair Display',serif; font-size:15px; font-weight:700; color:var(--text); }
+.prov-meta { font-size:11px; color:var(--text-dim); margin-top:2px; }
+.pbtn { font-family:'DM Sans',sans-serif; font-size:11px; font-weight:600; padding:5px 11px; border-radius:7px; cursor:pointer; white-space:nowrap; transition:all .18s ease; }
+.pbtn-sel { border:1px solid var(--gold); background:rgba(160,120,40,.08); color:var(--gold); }
+.pbtn-sel:hover { background:var(--gold); color:#fff; }
+.pbtn-edt { border:1px solid var(--border); background:transparent; color:var(--text-dim); }
+.pbtn-edt:hover { border-color:var(--gold-dim); color:var(--gold); }
+.pbtn-del { border:1px solid rgba(192,74,58,.3); background:transparent; color:var(--red); }
+.pbtn-del:hover { background:rgba(192,74,58,.08); }
+.pbtn-sair { border:1px solid rgba(192,74,58,.3); background:rgba(192,74,58,.05); color:var(--red); }
+.pbtn-sair:hover { background:rgba(192,74,58,.12); }
+.prov-form { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:18px; margin-top:6px; }
+.prov-form-title { font-size:12px; font-weight:700; color:var(--text-dim); letter-spacing:.5px; text-transform:uppercase; margin-bottom:12px; }
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+.form-full { grid-column:1/-1; }
+.form-actions { display:flex; gap:9px; margin-top:12px; }
+
+/* ── USUARIOS ── */
+#page-usuarios .user-item { display:flex; flex-direction:column; align-items:flex-start; gap:5px; padding:11px 13px; border:1px solid var(--border); border-radius:10px; margin-bottom:7px; background:var(--surface); transition:all .18s ease; }
+#page-usuarios .user-item:hover { border-color:var(--gold-dim); box-shadow:0 2px 8px rgba(0,0,0,.07); }
+#page-usuarios .user-item .uname { font-weight:700; color:var(--cream); font-size:14px; }
+#page-usuarios .user-item .urole { font-size:11px; color:var(--text-dim); }
+.tipo-grid { display:flex; gap:9px; margin-top:7px; }
+.tipo-opt { flex:1; display:flex; align-items:center; gap:8px; padding:10px 12px; border:2px solid var(--border); border-radius:9px; cursor:pointer; user-select:none; transition:all .18s ease; background:var(--surface2); }
+.tipo-opt:hover { border-color:var(--gold-dim); }
+.tipo-opt.selected { border-color:var(--gold); background:rgba(160,120,40,.07); }
+.tipo-opt input[type=radio] { width:14px; height:14px; accent-color:var(--gold); flex-shrink:0; }
+.tipo-opt .tipo-info strong { display:block; font-size:12px; color:var(--text); font-weight:700; }
+.tipo-opt .tipo-info span { font-size:10px; color:var(--text-dim); }
+.tipo-opt.selected .tipo-info strong { color:var(--gold); }
+
+/* ── MODAL GITHUB ── */
+.ghcfg-box { background:var(--surface); border:1px solid var(--gold-dim); border-radius:var(--radius); padding:28px 32px; max-width:460px; width:95%; }
+.ghcfg-box h3 { font-family:'Playfair Display',serif; color:var(--gold); margin-bottom:5px; font-size:19px; }
+.gh-status-row { display:flex; align-items:center; gap:8px; margin-bottom:14px; }
+#gh-test-status { font-size:12px; font-weight:600; }
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:5000; align-items:center; justify-content:center; }
+.modal-overlay.open { display:flex; }
+
+/* ── ENCRYPT BADGE ── */
+.enc-badge { font-size:10px; background:rgba(58,111,152,.10); color:var(--blue); border:1px solid rgba(58,111,152,.25); border-radius:10px; padding:1px 7px; font-weight:600; margin-left:6px; }
+
+/* ── EMPTY ── */
+.empty { text-align:center; padding:32px; color:var(--text-dim); font-size:13px; }
+.empty .ico { font-size:30px; display:block; margin-bottom:7px; }
+
+/* ── PAINEL RESUMO DO DIA ── */
+.resumo-bar {
+  display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;
+  background:linear-gradient(135deg,rgba(160,120,40,.07),rgba(58,111,152,.05));
+  border:1px solid var(--border); border-radius:var(--radius);
+  padding:16px 20px; margin-bottom:16px;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);
+}
+@media(max-width:600px){ .resumo-bar { grid-template-columns:1fr; } }
+.resumo-item { display:flex; flex-direction:column; gap:2px; }
+.resumo-label { font-size:10px; font-weight:700; color:var(--text-dim); letter-spacing:.6px; text-transform:uppercase; }
+.resumo-val { font-family:'Playfair Display',serif; font-size:20px; font-weight:700; }
+.resumo-sub { font-size:10px; color:var(--text-dim); margin-top:1px; }
+.resumo-divider { border-left:1px solid var(--border); padding-left:14px; }
+@media(max-width:600px){ .resumo-divider { border-left:none; border-top:1px solid var(--border); padding-left:0; padding-top:12px; } }
+
+/* ── PAGAMENTOS ANTECIPADOS ── */
+.prepaym-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:18px 20px; margin-bottom:16px;
+  box-shadow:0 1px 4px rgba(0,0,0,.05);
+}
+.prepaym-title {
+  font-size:12px; font-weight:700; color:var(--gold); letter-spacing:.5px;
+  text-transform:uppercase; margin-bottom:12px;
+  display:flex; align-items:center; gap:8px;
+}
+.prepaym-title::before { content:''; display:block; width:3px; height:12px; background:var(--gold); border-radius:2px; }
+.prepaym-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+@media(max-width:700px){ .prepaym-grid { grid-template-columns:1fr; } }
+.prepaym-item {
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:9px; padding:12px 14px; display:flex; flex-direction:column; gap:6px;
+}
+.prepaym-item-label { font-size:10px; font-weight:700; color:var(--text-dim); letter-spacing:.5px; text-transform:uppercase; }
+.prepaym-row { display:flex; gap:6px; align-items:center; }
+.prepaym-row input[type=date] { flex:1; min-width:0; }
+.prepaym-row input[type=number] { flex:1; min-width:0; }
+.prepaym-total { display:flex; justify-content:flex-end; align-items:center; gap:8px; margin-top:4px; font-size:12px; color:var(--text-dim); }
+.prepaym-total strong { font-family:'Playfair Display',serif; font-size:15px; color:var(--gold); font-weight:700; }
+
+/* ── TOAST ── */
+#toast { position:fixed; bottom:20px; right:20px; background:var(--green); color:#fff; padding:10px 16px; border-radius:8px; font-size:13px; font-weight:500; opacity:0; pointer-events:none; transition:opacity .3s; z-index:9999; }
+#toast.show { opacity:1; }
+
+.dot-online { width:7px; height:7px; border-radius:50%; background:var(--green); display:inline-block; box-shadow:0 0 4px var(--green); }
+
+@media print {
+  #login-screen,#sc-prov,header,nav,.no-print,.modal-overlay { display:none !important; }
+  body { background:#fff; color:#000; }
+  .recibo-card { border:1px solid #ccc; box-shadow:none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════ LOGIN ══════════ -->
+<div id="login-screen" class="open">
+  <div class="login-box">
+    <div class="login-logo">MEI · <span>Horas</span></div>
+    <div class="login-sub">Controle de Horas — Acesso Seguro</div>
+    <div class="login-field">
+      <label>Usuário</label>
+      <input type="text" class="login-input" id="login-user" placeholder="Digite seu usuário"
+             autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()">
+    </div>
+    <div class="login-field">
+      <label>Senha</label>
+      <input type="password" class="login-input" id="login-pass" placeholder="Digite sua senha"
+             autocomplete="current-password" onkeydown="if(event.key==='Enter')fazerLogin()">
+    </div>
+    <div class="login-error" id="login-error"></div>
+    <button class="login-btn" onclick="fazerLogin()">🔑 Entrar</button>
+  </div>
+</div>
+
+<!-- ══════════ TELA PRESTADORES ══════════ -->
+<div id="sc-prov">
+  <div class="prov-box">
+    <div class="prov-header">
+      <div class="prov-title">Prestadores</div>
+      <button class="pbtn pbtn-sair" onclick="fazerLogout()">Sair</button>
+    </div>
+    <div class="prov-sub" id="prov-sub-texto">Selecione um prestador.</div>
+    <div class="prov-lista" id="prov-lista"></div>
+    <div id="prov-form-area">
+      <div class="prov-form">
+        <div class="prov-form-title" id="pf-titulo">➕ Novo Prestador</div>
+        <div class="form-grid">
+          <div class="cfg-field">
+            <div class="cfg-label">Nome *</div>
+            <input type="text" class="login-input" id="pf-nome" placeholder="Ex: João Silva">
+          </div>
+          <div class="cfg-field">
+            <div class="cfg-label">CNPJ / CPF <span class="enc-badge">🔒 criptografado</span></div>
+            <input type="text" class="login-input" id="pf-cpf" placeholder="00.000.000/0001-00"
+                   oninput="maskCpfCnpj(this)" onblur="validarCpfCnpjField(this,'pf-cpf-hint')">
+            <span class="field-hint" id="pf-cpf-hint"></span>
+          </div>
+          <div class="cfg-field">
+            <div class="cfg-label">Empresa Contratante</div>
+            <input type="text" class="login-input" id="pf-empresa" placeholder="Ex: Empresa XPTO">
+          </div>
+          <div class="cfg-field">
+            <div class="cfg-label">Tarifa/Hora (R$)</div>
+            <input type="number" class="login-input" id="pf-tarifa" value="20" step="0.5" min="0">
+          </div>
+          <div class="cfg-field">
+            <div class="cfg-label">Horas Contratadas/Dia</div>
+            <input type="number" class="login-input" id="pf-hdia" value="8" step="0.5" min="1" max="24">
+          </div>
+          <div class="cfg-field">
+            <div class="cfg-label">PIX / Banco</div>
+            <input type="text" class="login-input" id="pf-pix" placeholder="Chave PIX">
+          </div>
+          <div class="cfg-field form-full" style="margin-top:2px">
+            <div class="cfg-label">Entrada · Saída · Início Intervalo · Fim Intervalo</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:5px">
+              <input type="time" class="login-input" id="pf-ent" value="09:00" style="flex:1;min-width:100px">
+              <input type="time" class="login-input" id="pf-sai" value="18:00" style="flex:1;min-width:100px">
+              <input type="time" class="login-input" id="pf-ai"  value="12:00" style="flex:1;min-width:100px">
+              <input type="time" class="login-input" id="pf-af"  value="13:00" style="flex:1;min-width:100px">
+            </div>
+          </div>
+        </div>
+        <input type="hidden" id="pf-id">
+        <div class="form-actions">
+          <button class="btn btn-gold" onclick="salvarPrestador()">Salvar Prestador</button>
+          <button class="btn btn-ghost" onclick="cancelarForm()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ HEADER APP ══════════ -->
+<header id="app-header" style="display:none;">
+  <div class="logo">MEI · <span>Horas</span></div>
+  <nav id="main-nav">
+    <button class="active" onclick="showPage('registro',this)">📋 Registro</button>
+    <button onclick="showPage('recibo',this)">🧾 Recibo</button>
+    <button onclick="showPage('historico',this)">📊 Histórico</button>
+    <button onclick="showPage('config',this)">⚙️ Config</button>
+    <button id="nav-btn-usuarios" onclick="showPage('usuarios',this)" style="display:none;">🔐 Usuários</button>
+  </nav>
+  <div class="header-right">
+    <div class="gh-bar">
+      <span id="gh-status-hdr" style="color:var(--text-dim);">⏳ GitHub…</span>
+      <button class="btn-gh" onclick="abrirGHConfig()">⚙️ GitHub</button>
+      <button class="btn-gh" onclick="sincronizar()">🔄 Sync</button>
+    </div>
+    <div class="user-info" id="header-user-info" style="display:none;">
+      <span class="dot-online"></span>
+      <strong id="header-username"></strong>
+      <span id="header-role-badge" class="role-badge role-admin">Admin</span>
+      <span style="color:var(--text-dim);font-size:11px;" id="header-prov-nome"></span>
+      <button class="pbtn pbtn-edt btn-sm" id="btn-trocar" onclick="irPrestadores()" style="display:none;">⇄ Trocar</button>
+      <button class="btn-logout" onclick="fazerLogout()">Sair</button>
+    </div>
+  </div>
+</header>
+
+<main id="app-main" style="display:none;">
+
+<!-- REGISTRO -->
+<div id="page-registro" class="page active">
+  <h1 class="page-title">Registro de Horas</h1>
+  <p class="page-sub">Lance as horas trabalhadas por dia no mês selecionado.</p>
+
+  <!-- RESUMO DO DIA -->
+  <div class="resumo-bar" id="resumo-bar">
+    <div class="resumo-item">
+      <div class="resumo-label">💼 Trabalhado até hoje</div>
+      <div class="resumo-val blue" id="res-trabalhado">R$ 0,00</div>
+      <div class="resumo-sub" id="res-trabalhado-h">0 horas</div>
+    </div>
+    <div class="resumo-item resumo-divider">
+      <div class="resumo-label">✅ Total Recebido</div>
+      <div class="resumo-val" style="color:var(--gold);" id="res-recebido">R$ 0,00</div>
+      <div class="resumo-sub" id="res-recebido-sub">lançamentos + adiantamentos</div>
+    </div>
+    <div class="resumo-item resumo-divider">
+      <div class="resumo-label">📌 Diferença a Receber</div>
+      <div class="resumo-val" id="res-diferenca">R$ 0,00</div>
+      <div class="resumo-sub" id="res-diferenca-sub">—</div>
+    </div>
+  </div>
+
+  <!-- PAGAMENTOS ANTECIPADOS -->
+  <div class="prepaym-card">
+    <div class="prepaym-title">💵 Pagamentos Antecipados (antes do mês)</div>
+    <div class="prepaym-grid">
+      <div class="prepaym-item">
+        <div class="prepaym-item-label">Adiantamento 1</div>
+        <div class="prepaym-row">
+          <input type="date" id="pre-data-1" class="ti" style="width:auto;" onchange="savePrePayments()">
+          <input type="number" id="pre-val-1" class="ti" placeholder="0,00" min="0" step="0.01" style="width:90px;" onchange="savePrePayments()">
+        </div>
+      </div>
+      <div class="prepaym-item">
+        <div class="prepaym-item-label">Adiantamento 2</div>
+        <div class="prepaym-row">
+          <input type="date" id="pre-data-2" class="ti" style="width:auto;" onchange="savePrePayments()">
+          <input type="number" id="pre-val-2" class="ti" placeholder="0,00" min="0" step="0.01" style="width:90px;" onchange="savePrePayments()">
+        </div>
+      </div>
+      <div class="prepaym-item">
+        <div class="prepaym-item-label">Adiantamento 3</div>
+        <div class="prepaym-row">
+          <input type="date" id="pre-data-3" class="ti" style="width:auto;" onchange="savePrePayments()">
+          <input type="number" id="pre-val-3" class="ti" placeholder="0,00" min="0" step="0.01" style="width:90px;" onchange="savePrePayments()">
+        </div>
+      </div>
+    </div>
+    <div class="prepaym-total">
+      <span>Total adiantado:</span>
+      <strong id="pre-total">R$ 0,00</strong>
+    </div>
+  </div>
+
+  <div class="cfg-banner">
+    <div class="cfg-field">
+      <div class="cfg-label">Mês</div>
+      <select id="sel-mes" onchange="loadMonth()">
+        <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+        <option value="03">Março</option><option value="04">Abril</option>
+        <option value="05">Maio</option><option value="06">Junho</option>
+        <option value="07">Julho</option><option value="08">Agosto</option>
+        <option value="09">Setembro</option><option value="10">Outubro</option>
+        <option value="11">Novembro</option><option value="12">Dezembro</option>
+      </select>
+    </div>
+    <div class="cfg-field">
+      <div class="cfg-label">Ano</div>
+      <input type="number" id="sel-ano" value="2025" min="2020" max="2035" onchange="loadMonth()">
+    </div>
+    <div class="cfg-field">
+      <div class="cfg-label">Entrada Padrão</div>
+      <input type="time" id="r-ent" value="09:00" onchange="saveConfig();applyDef()">
+    </div>
+    <div class="cfg-field">
+      <div class="cfg-label">Saída Padrão</div>
+      <input type="time" id="r-sai" value="18:00" onchange="saveConfig();applyDef()">
+    </div>
+    <div class="cfg-field">
+      <div class="cfg-label">Interv. Início</div>
+      <input type="time" id="r-ai" value="12:00" onchange="saveConfig();applyDef()">
+    </div>
+    <div class="cfg-field">
+      <div class="cfg-label">Interv. Fim</div>
+      <input type="time" id="r-af" value="13:00" onchange="saveConfig();applyDef()">
+    </div>
+  </div>
+  <div class="stats-row" id="cards"></div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th>#</th><th>Dia</th><th>Data</th>
+        <th>Entrada</th><th>Saída</th><th>Ini.Int</th><th>Fim.Int</th>
+        <th>Horas</th><th>Valor</th><th>Tipo</th>
+        <th>Dif.</th><th>Obs</th><th>Recebido</th><th>Acumulado</th>
+      </tr></thead>
+      <tbody id="tbl-body"></tbody>
+      <tfoot id="tbl-foot"></tfoot>
+    </table>
+  </div>
+</div>
+
+<!-- RECIBO -->
+<div id="page-recibo" class="page">
+  <h1 class="page-title">Recibo de Serviços</h1>
+  <p class="page-sub">Gere o recibo de prestação de serviços do mês selecionado.</p>
+  <div class="recibo-card">
+    <div class="recibo-title">RECIBO DE PRESTAÇÃO DE SERVIÇOS</div>
+    <div id="recibo-body"></div>
+    <button class="btn btn-blue no-print" style="margin-top:18px;" onclick="window.print()">🖨 Imprimir</button>
+  </div>
+</div>
+
+<!-- HISTÓRICO -->
+<div id="page-historico" class="page">
+  <h1 class="page-title">Histórico Anual</h1>
+  <p class="page-sub">Resumo de horas e valores mês a mês.</p>
+  <div id="hist-list"></div>
+</div>
+
+<!-- CONFIGURAÇÕES -->
+<div id="page-config" class="page">
+  <h1 class="page-title">Configurações</h1>
+  <p class="page-sub">Dados do prestador ativo.</p>
+  <div class="cfg-panel">
+    <div class="cfg-g">
+      <div class="field cfg-full">
+        <label>Nome do Prestador</label>
+        <input type="text" id="c-nome" oninput="saveConfig();updateTop()">
+      </div>
+      <div class="field cfg-full">
+        <label>Empresa Contratante</label>
+        <input type="text" id="c-emp" oninput="saveConfig()">
+      </div>
+      <div class="field">
+        <label>Tarifa/Hora (R$)</label>
+        <input type="number" id="c-tar" step="0.5" min="0" oninput="saveConfig();updateTop();recalc()">
+      </div>
+      <div class="field">
+        <label>Horas/Dia</label>
+        <input type="number" id="c-hd" step="0.5" min="1" max="24" oninput="saveConfig();recalc()">
+      </div>
+      <div class="field cfg-full">
+        <label>CNPJ / CPF <span class="enc-badge">🔒 criptografado</span></label>
+        <input type="text" id="c-cpf" placeholder="00.000.000/0001-00"
+               oninput="maskCpfCnpj(this)" onblur="validarCpfCnpjField(this,'c-cpf-hint')">
+        <span class="field-hint" id="c-cpf-hint"></span>
+      </div>
+      <div class="field cfg-full">
+        <label>PIX / Dados Bancários <span class="enc-badge">🔒 criptografado</span></label>
+        <input type="text" id="c-pix" oninput="saveConfig()">
+      </div>
+      <hr class="cfg-sep">
+      <div class="cfg-full btn-row">
+        <button class="btn btn-gold" onclick="saveConfigValidated()">Salvar</button>
+        <button class="btn btn-ghost" onclick="abrirAltSenha()">🔒 Alterar Senha</button>
+      </div>
+      <hr class="cfg-sep">
+      <div class="cfg-full">
+        <div class="cfg-label" style="color:var(--red);margin-bottom:8px">Zona de Perigo</div>
+        <button class="btn-danger-cfg" onclick="clearAll()">🗑 Apagar dados deste prestador</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- USUÁRIOS -->
+<div id="page-usuarios" class="page">
+  <h1 class="page-title">Gerenciar Usuários</h1>
+  <p class="page-sub">Cadastre usuários e defina o tipo de acesso (Administrador ou Operador).</p>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Novo Usuário</div>
+      <div class="field">
+        <label>Nome de Usuário</label>
+        <input type="text" id="usr-nome" placeholder="Ex.: joao.silva" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Senha</label>
+        <input type="password" id="usr-senha" placeholder="Mínimo 4 caracteres" autocomplete="new-password">
+      </div>
+      <div class="field">
+        <label>Confirmar Senha</label>
+        <input type="password" id="usr-senha2" placeholder="Repita a senha" autocomplete="new-password">
+      </div>
+      <div class="field">
+        <label>Tipo de Acesso</label>
+        <div class="tipo-grid">
+          <label class="tipo-opt selected" id="tipo-opt-admin" onclick="selectTipo('administrador')">
+            <input type="radio" name="usr-tipo" value="administrador" checked>
+            <div class="tipo-info"><strong>👑 Administrador</strong><span>Acesso total</span></div>
+          </label>
+          <label class="tipo-opt" id="tipo-opt-operador" onclick="selectTipo('operador')">
+            <input type="radio" name="usr-tipo" value="operador">
+            <div class="tipo-info"><strong>👤 Operador</strong><span>Prestador vinculado</span></div>
+          </label>
+        </div>
+      </div>
+      <div class="field" id="usr-vinculo-field" style="display:none;">
+        <label>Prestador Vinculado</label>
+        <select id="usr-prestador"><option value="">— Selecione —</option></select>
+      </div>
+      <div style="margin-top:6px;">
+        <button class="btn btn-gold" onclick="addUsuario()">+ Adicionar Usuário</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Usuários Cadastrados</div>
+      <div id="lista-usuarios"><div class="empty"><span class="ico">🔐</span>Nenhum usuário</div></div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<!-- ══════════ MODAL ALTERAR SENHA ══════════ -->
+<div id="modal-alt-senha" class="modal-overlay">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px 32px;max-width:360px;width:92%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.15);">
+    <div style="font-family:'Playfair Display',serif;font-size:19px;color:var(--gold);margin-bottom:5px;">🔒 Alterar Senha</div>
+    <p style="font-size:12px;color:var(--text-dim);margin-bottom:18px;">Altere sua senha de acesso ao sistema.</p>
+    <div class="login-field" style="text-align:left"><label>Senha Atual</label><input type="password" class="login-input" id="i-a0" placeholder="Senha atual"></div>
+    <div class="login-field" style="text-align:left"><label>Nova Senha</label><input type="password" class="login-input" id="i-a1" placeholder="Mínimo 4 caracteres"></div>
+    <div class="login-field" style="text-align:left"><label>Confirmar Nova Senha</label><input type="password" class="login-input" id="i-a2" placeholder="Repita" onkeydown="if(event.key==='Enter')alterarSenha()"></div>
+    <div class="login-error" id="e-alt"></div>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button class="btn btn-ghost" onclick="fecharAltSenha()">Cancelar</button>
+      <button class="btn btn-gold" onclick="alterarSenha()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAL GITHUB CONFIG ══════════ -->
+<div id="modal-ghcfg" class="modal-overlay">
+  <div class="ghcfg-box">
+    <h3>⚙️ Configuração GitHub</h3>
+    <p style="font-size:12px;color:var(--text-dim);margin-bottom:18px;">Os dados são salvos em <code style="color:var(--gold);">db/mei_horas.json</code> no repositório configurado. O token é armazenado apenas localmente.</p>
+    <div class="field"><label>Usuário GitHub</label><input type="text" id="gh-user" placeholder="seu-usuario"></div>
+    <div class="field"><label>Repositório</label><input type="text" id="gh-repo" placeholder="mei-horas-db"></div>
+    <div class="field"><label>Branch</label><input type="text" id="gh-branch" placeholder="main" value="main"></div>
+    <div class="field"><label>Token (ghp_…)</label><input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxx"></div>
+    <div class="gh-status-row"><span id="gh-test-status"></span></div>
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="salvarGHConfig()">✓ Salvar e Conectar</button>
+      <button class="btn btn-ghost" onclick="fecharGHConfig()">Cancelar</button>
+      <button class="btn btn-danger" onclick="limparGHConfig()" style="margin-left:auto;">🗑 Desconectar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ═══════════════════════════════
+   CONSTANTES
+═══════════════════════════════ */
+var GH_CFG_KEY  = 'mei_gh_cfg';
+var GH_FILE     = 'db/mei_horas.json';
+var STORAGE_KEY = 'mei_local_db';
+var ENC_KEY     = 'MEI_HORAS_2024_SECURE'; // chave simétrica local
+
+const DIAS  = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+               'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+/* ═══════════════════════════════
+   ESTADO GLOBAL
+═══════════════════════════════ */
+var PID = null;
+var _usuarioLogado = null;
+var _cache = {};
+var _currentSha = null;
+var _ultimoHash = '';
+var _autoSyncTimer = null;
+
+/* ═══════════════════════════════
+   UTILS
+═══════════════════════════════ */
+const pad  = n => String(n).padStart(2,'0');
+const $    = id => document.getElementById(id);
+const fmtM = v => 'R$ '+Number(v).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+function fmtH(h){
+  if(h==null||isNaN(h))return '—';
+  const s=h<0,a=Math.abs(h),hh=Math.floor(a),mm=Math.round((a-hh)*60);
+  return(s?'-':'')+pad(hh)+':'+pad(mm);
+}
+const t2h = t=>{ if(!t)return null; const[h,m]=t.split(':').map(Number); return h+m/60; };
+const dH  = (a,b)=>{ const x=t2h(a),y=t2h(b); return(x&&y&&y>x)?y-x:0; };
+const DIM = (m,y)=>new Date(y,parseInt(m),0).getDate();
+const DOW = (d,m,y)=>new Date(y,parseInt(m)-1,d).getDay();
+
+function toast(msg,bg){
+  var el=$('toast');
+  el.textContent=msg;
+  el.style.background=bg||'var(--green)';
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2800);
+}
+
+/* ═══════════════════════════════
+   CRIPTOGRAFIA XOR + BASE64
+   Criptografia simétrica leve para dados sensíveis (CPF, CNPJ, PIX)
+   armazenados no localStorage e no GitHub.
+═══════════════════════════════ */
+function xorEncrypt(text, key){
+  if(!text) return '';
+  var out='';
+  for(var i=0;i<text.length;i++){
+    out+=String.fromCharCode(text.charCodeAt(i)^key.charCodeAt(i%key.length));
+  }
+  try{ return btoa(unescape(encodeURIComponent(out))); }
+  catch(e){ return btoa(out); }
+}
+
+function xorDecrypt(enc, key){
+  if(!enc) return '';
+  try{
+    var decoded;
+    try{ decoded=decodeURIComponent(escape(atob(enc))); }
+    catch(e){ decoded=atob(enc); }
+    var out='';
+    for(var i=0;i<decoded.length;i++){
+      out+=String.fromCharCode(decoded.charCodeAt(i)^key.charCodeAt(i%key.length));
+    }
+    return out;
+  }catch(e){ return enc; }
+}
+
+// Funções públicas de encrypt/decrypt de campos sensíveis
+function encField(val){ return val ? '🔒'+xorEncrypt(val, ENC_KEY) : ''; }
+function decField(val){
+  if(!val) return '';
+  if(val.startsWith('🔒')) return xorDecrypt(val.slice(2), ENC_KEY);
+  return val; // dados legados não criptografados
+}
+
+/* ═══════════════════════════════
+   VALIDAÇÃO CPF / CNPJ
+═══════════════════════════════ */
+function maskCpfCnpj(input){
+  var v = input.value.replace(/\D/g,'');
+  if(v.length<=11){
+    v=v.replace(/(\d{3})(\d)/,'$1.$2');
+    v=v.replace(/(\d{3})(\d)/,'$1.$2');
+    v=v.replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+  } else {
+    v=v.replace(/^(\d{2})(\d)/,'$1.$2');
+    v=v.replace(/^(\d{2})\.(\d{3})(\d)/,'$1.$2.$3');
+    v=v.replace(/\.(\d{3})(\d)/,'.$1/$2');
+    v=v.replace(/(\d{4})(\d)/,'$1-$2');
+  }
+  input.value=v;
+}
+
+function validarCPF(cpf){
+  cpf=cpf.replace(/\D/g,'');
+  if(cpf.length!==11||/^(\d)\1+$/.test(cpf)) return false;
+  var s=0;
+  for(var i=0;i<9;i++) s+=parseInt(cpf[i])*(10-i);
+  var r=s%11<2?0:11-s%11;
+  if(r!==parseInt(cpf[9])) return false;
+  s=0;
+  for(var i=0;i<10;i++) s+=parseInt(cpf[i])*(11-i);
+  r=s%11<2?0:11-s%11;
+  return r===parseInt(cpf[10]);
+}
+
+function validarCNPJ(cnpj){
+  cnpj=cnpj.replace(/\D/g,'');
+  if(cnpj.length!==14||/^(\d)\1+$/.test(cnpj)) return false;
+  var c=[6,5,4,3,2,9,8,7,6,5,4,3,2];
+  var s=0;
+  for(var i=1;i<13;i++) s+=parseInt(cnpj[i-1])*c[i];
+  var r=s%11<2?0:11-s%11;
+  if(r!==parseInt(cnpj[12])) return false;
+  s=0;
+  for(var i=0;i<13;i++) s+=parseInt(cnpj[i])*c[i];
+  r=s%11<2?0:11-s%11;
+  return r===parseInt(cnpj[13]);
+}
+
+function validarCpfCnpj(valor){
+  var v=valor.replace(/\D/g,'');
+  if(v.length===11) return validarCPF(v) ? {ok:true,tipo:'CPF'} : {ok:false,msg:'CPF inválido'};
+  if(v.length===14) return validarCNPJ(v) ? {ok:true,tipo:'CNPJ'} : {ok:false,msg:'CNPJ inválido'};
+  if(v.length===0) return {ok:true,tipo:''};
+  return {ok:false,msg:'Deve ter 11 dígitos (CPF) ou 14 dígitos (CNPJ)'};
+}
+
+function validarCpfCnpjField(input, hintId){
+  var val=input.value.trim();
+  if(!val){ input.className=input.className.replace(' valid','').replace(' invalid',''); if($( hintId)) $(hintId).textContent=''; return true; }
+  var r=validarCpfCnpj(val);
+  var hintEl=$(hintId);
+  if(r.ok){
+    input.classList.remove('invalid'); input.classList.add('valid');
+    if(hintEl){ hintEl.textContent='✓ '+r.tipo+' válido'; hintEl.className='field-hint ok'; }
+    return true;
+  } else {
+    input.classList.remove('valid'); input.classList.add('invalid');
+    if(hintEl){ hintEl.textContent='✗ '+r.msg; hintEl.className='field-hint err'; }
+    return false;
+  }
+}
+
+/* ═══════════════════════════════
+   HASH SENHA
+═══════════════════════════════ */
+function _hashSenha(s){
+  var h=0; for(var i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; }
+  return h.toString(16);
+}
+
+/* ═══════════════════════════════
+   GITHUB API
+═══════════════════════════════ */
+var GH = {
+  getCfg: function(){ try{ return JSON.parse(localStorage.getItem(GH_CFG_KEY)||'null')||{}; }catch(e){ return {}; } },
+  saveCfg: function(obj){ localStorage.setItem(GH_CFG_KEY,JSON.stringify(obj)); },
+  isConfigured: function(){ var c=GH.getCfg(); return !!(c.user&&c.repo&&c.branch&&c.token); },
+  _url: function(){ var c=GH.getCfg(); return 'https://api.github.com/repos/'+c.user+'/'+c.repo+'/contents/'+GH_FILE+'?ref='+c.branch; },
+  _headers: function(){ var c=GH.getCfg(); return {'Authorization':'token '+c.token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'}; },
+
+  read: async function(){
+    try{
+      var resp=await fetch(GH._url(),{headers:GH._headers()});
+      if(resp.status===404) return {content:null,sha:null};
+      if(!resp.ok) throw new Error('HTTP '+resp.status);
+      var data=await resp.json();
+      var raw=(data.content||'').replace(/\n/g,'').trim();
+      if(!raw) return {content:null,sha:data.sha};
+      var json='';
+      try{ json=decodeURIComponent(escape(atob(raw))); }catch(e){ json=atob(raw); }
+      json=json.trim();
+      if(!json) return {content:null,sha:data.sha};
+      var parsed=null;
+      try{ parsed=JSON.parse(json); }catch(e){ return {content:null,sha:data.sha}; }
+      return {content:parsed,sha:data.sha};
+    }catch(e){ console.error('GH read:',e); throw e; }
+  },
+
+  write: async function(dados,sha){
+    var c=GH.getCfg();
+    var json=JSON.stringify(dados,null,2);
+    var b64;
+    try{ b64=btoa(unescape(encodeURIComponent(json))); }catch(e){ b64=btoa(json); }
+    var body={message:'MEI·Horas — '+new Date().toLocaleString('pt-BR'),content:b64,branch:c.branch};
+    if(sha) body.sha=sha;
+    var resp=await fetch('https://api.github.com/repos/'+c.user+'/'+c.repo+'/contents/'+GH_FILE,
+      {method:'PUT',headers:GH._headers(),body:JSON.stringify(body)});
+    if(!resp.ok){ var err=await resp.json().catch(function(){ return {}; }); throw new Error((err.message||'Erro')+'(HTTP '+resp.status+')'); }
+    var result=await resp.json();
+    return result.content.sha;
+  },
+
+  test: async function(){
+    try{
+      var c=GH.getCfg();
+      var resp=await fetch('https://api.github.com/repos/'+c.user+'/'+c.repo,{headers:GH._headers()});
+      if(resp.status===401) return {ok:false,msg:'Token inválido ou sem permissão.'};
+      if(resp.status===404) return {ok:false,msg:'Repositório não encontrado.'};
+      if(!resp.ok) return {ok:false,msg:'Erro HTTP '+resp.status};
+      return {ok:true,msg:'Conectado com sucesso!'};
+    }catch(e){ return {ok:false,msg:'Erro de rede: '+e.message}; }
+  }
+};
+
+/* ═══════════════════════════════
+   DB — PERSISTÊNCIA
+═══════════════════════════════ */
+function _carregarLocal(){
+  try{ var l=localStorage.getItem(STORAGE_KEY); if(l) _cache=JSON.parse(l)||{}; else _cache={}; }
+  catch(e){ _cache={}; }
+}
+
+function _garantirArrays(){
+  ['provs','usuarios'].forEach(function(k){ if(!Array.isArray(_cache[k])) _cache[k]=[]; });
+}
+
+async function _persistir(cb){
+  _garantirArrays();
+  if(GH.isConfigured()){
+    try{
+      _currentSha=await GH.write(_cache,_currentSha);
+      try{ localStorage.setItem(STORAGE_KEY,JSON.stringify(_cache)); }catch(e){}
+      if(cb) cb(null);
+    }catch(e){
+      try{
+        var r=await GH.read();
+        _currentSha=r?r.sha:null;
+        _currentSha=await GH.write(_cache,_currentSha);
+        try{ localStorage.setItem(STORAGE_KEY,JSON.stringify(_cache)); }catch(e2){}
+        if(cb) cb(null);
+      }catch(e2){
+        console.error('GH write error:',e2);
+        try{ localStorage.setItem(STORAGE_KEY,JSON.stringify(_cache)); }catch(e3){}
+        toast('⚠️ Salvo localmente (GitHub indisponível).','#a07828');
+        if(cb) cb(null);
+      }
+    }
+  } else {
+    try{ localStorage.setItem(STORAGE_KEY,JSON.stringify(_cache)); }catch(e){}
+    if(cb) cb(null);
+  }
+}
+
+async function _loadAll(cb){
+  if(GH.isConfigured()){
+    try{
+      var result=await GH.read();
+      if(result&&result.content){ _cache=result.content; _currentSha=result.sha; }
+      else{
+        _carregarLocal();
+        _currentSha=result?result.sha:null;
+        try{ _currentSha=await GH.write(_cache,_currentSha); }catch(we){ console.warn('GH init:',we.message); }
+      }
+    }catch(e){
+      _carregarLocal();
+      if(cb) cb(new Error('GitHub indisponível: '+e.message));
+      return;
+    }
+  } else { _carregarLocal(); }
+  _garantirArrays();
+  if(cb) cb(null);
+}
+
+/* ═══════════════════════════════
+   PRESTADORES NO CACHE
+═══════════════════════════════ */
+function getProvs(){ return _cache.provs||[]; }
+function saveProvs(list){ _cache.provs=list; _persistir(null); }
+
+/* ═══════════════════════════════
+   USUARIOS NO CACHE
+═══════════════════════════════ */
+function _getUsuarios(){ return _cache.usuarios||[]; }
+function _setUsuarios(lista, cb){ _cache.usuarios=lista; _persistir(cb); }
+
+function _ensureAdminDefault(){
+  if(!(_cache.usuarios||[]).length){
+    _cache.usuarios=[{id:'admin',nome:'admin',senhaHash:_hashSenha('1234'),tipo:'administrador',prestadorId:null}];
+    _persistir(null);
+  }
+}
+
+/* ═══════════════════════════════
+   GITHUB STATUS / SYNC
+═══════════════════════════════ */
+function setGhStatus(txt,cor){
+  var el=$('gh-status-hdr');
+  if(el){ el.textContent=txt; el.style.color=cor||'var(--green)'; }
+}
+
+function _hashCache(){ return JSON.stringify(_cache).length+'_'+((_cache.usuarios||[]).length)+'_'+((_cache.provs||[]).length); }
+
+async function sincronizar(){
+  if(!GH.isConfigured()){ setGhStatus('⚠ Sem GitHub','var(--text-dim)'); _carregarLocal(); _garantirArrays(); return; }
+  setGhStatus('⏳ Sincronizando…','var(--gold)');
+  await _loadAll(function(err){
+    if(err){ setGhStatus('❌ '+err.message,'var(--red)'); }
+    else{
+      var now=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      setGhStatus('✅ Sync '+now,'var(--green)');
+      _ultimoHash=_hashCache();
+      iniciarAutoSync();
+    }
+  });
+}
+
+function iniciarAutoSync(){
+  if(_autoSyncTimer) clearInterval(_autoSyncTimer);
+  _autoSyncTimer=setInterval(async function(){
+    if(!GH.isConfigured()) return;
+    var ativo=document.activeElement;
+    if(ativo&&(ativo.tagName==='INPUT'||ativo.tagName==='SELECT'||ativo.tagName==='TEXTAREA')) return;
+    try{
+      var r=await GH.read();
+      if(!r||!r.content) return;
+      var h=JSON.stringify(r.content).length+'_'+((r.content.usuarios||[]).length)+'_'+((r.content.provs||[]).length);
+      if(h===_ultimoHash) return;
+      _cache=r.content; _currentSha=r.sha; _ultimoHash=h;
+      _garantirArrays();
+      var now=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      setGhStatus('✅ Auto-sync '+now,'var(--green)');
+    }catch(e){ console.warn('Auto-sync:',e.message); }
+  },30000);
+}
+
+/* ═══════════════════════════════
+   MODAL GITHUB CONFIG
+═══════════════════════════════ */
+function abrirGHConfig(){
+  var c=GH.getCfg();
+  $('gh-user').value=c.user||''; $('gh-repo').value=c.repo||'';
+  $('gh-branch').value=c.branch||'main'; $('gh-token').value=c.token||'';
+  $('gh-test-status').textContent='';
+  $('modal-ghcfg').classList.add('open');
+}
+function fecharGHConfig(){ $('modal-ghcfg').classList.remove('open'); }
+
+async function salvarGHConfig(){
+  var user=$('gh-user').value.trim(), repo=$('gh-repo').value.trim();
+  var branch=$('gh-branch').value.trim()||'main', token=$('gh-token').value.trim();
+  if(!user||!repo||!token){ $('gh-test-status').textContent='⚠️ Preencha todos os campos.'; $('gh-test-status').style.color='var(--red)'; return; }
+  GH.saveCfg({user,repo,branch,token});
+  $('gh-test-status').textContent='⏳ Testando…'; $('gh-test-status').style.color='var(--gold)';
+  var r=await GH.test();
+  if(!r.ok){ $('gh-test-status').textContent='❌ '+r.msg; $('gh-test-status').style.color='var(--red)'; return; }
+  $('gh-test-status').textContent='✅ '+r.msg; $('gh-test-status').style.color='var(--green)';
+  setTimeout(function(){ fecharGHConfig(); sincronizar(); },1200);
+}
+
+function limparGHConfig(){
+  if(!confirm('Desconectar do GitHub? Os dados locais não serão apagados.')) return;
+  localStorage.removeItem(GH_CFG_KEY); _currentSha=null; fecharGHConfig();
+  setGhStatus('⚠ Sem GitHub','var(--text-dim)');
+  toast('GitHub desconectado.','#c04a3a');
+}
+
+/* ═══════════════════════════════
+   LOGIN / LOGOUT
+═══════════════════════════════ */
+async function fazerLogin(){
+  var user=$('login-user').value.trim(), pass=$('login-pass').value;
+  var errEl=$('login-error'), btn=document.querySelector('#login-screen .login-btn');
+  if(!user||!pass){ errEl.textContent='Preencha usuário e senha.'; return; }
+  errEl.textContent=''; btn.textContent='⏳ Verificando…'; btn.disabled=true;
+
+  // Carrega dados (GitHub ou local) antes de validar
+  await _loadAll(function(){});
+  _ensureAdminDefault();
+
+  btn.textContent='🔑 Entrar'; btn.disabled=false;
+
+  var usuarios=_getUsuarios(), encontrado=null;
+  for(var i=0;i<usuarios.length;i++){
+    if(usuarios[i].nome.toLowerCase()===user.toLowerCase()&&usuarios[i].senhaHash===_hashSenha(pass)){
+      encontrado=usuarios[i]; break;
+    }
+  }
+  if(!encontrado){
+    errEl.textContent='❌ Usuário ou senha incorretos.';
+    $('login-pass').value=''; $('login-pass').focus(); return;
+  }
+  _usuarioLogado=encontrado;
+  $('login-screen').classList.remove('open');
+  errEl.textContent='';
+
+  if(GH.isConfigured()) sincronizar();
+  else setGhStatus('⚠ Configure o GitHub','var(--text-dim)');
+
+  if(encontrado.tipo==='administrador'){ mostrarPrestadores(); }
+  else {
+    if(!encontrado.prestadorId){ errEl.textContent='⚠ Sem prestador vinculado. Contate o administrador.'; $('login-screen').classList.add('open'); _usuarioLogado=null; return; }
+    var prov=getProvs().find(function(p){ return p.id===encontrado.prestadorId; });
+    if(!prov){ errEl.textContent='⚠ Prestador não encontrado. Contate o administrador.'; $('login-screen').classList.add('open'); _usuarioLogado=null; return; }
+    abrirApp(encontrado.prestadorId);
+  }
+}
+
+function fazerLogout(){
+  if(!confirm('Deseja sair do sistema?')) return;
+  if(_autoSyncTimer){ clearInterval(_autoSyncTimer); _autoSyncTimer=null; }
+  _usuarioLogado=null; PID=null;
+  $('login-user').value=''; $('login-pass').value=''; $('login-error').textContent='';
+  $('app-header').style.display='none'; $('app-main').style.display='none';
+  $('sc-prov').classList.remove('open');
+  $('login-screen').classList.add('open');
+  setTimeout(function(){ $('login-user').focus(); },100);
+}
+
+/* ═══════════════════════════════
+   TELAS
+═══════════════════════════════ */
+function mostrarPrestadores(){
+  $('sc-prov').classList.add('open');
+  $('app-header').style.display='none'; $('app-main').style.display='none';
+  var isAdmin=_usuarioLogado&&_usuarioLogado.tipo==='administrador';
+  $('prov-form-area').style.display=isAdmin?'':'none';
+  $('prov-sub-texto').textContent=isAdmin?'Selecione um prestador ou cadastre um novo abaixo.':'Selecione seu prestador.';
+  renderProv(); cancelarForm();
+}
+
+function irPrestadores(){ mostrarPrestadores(); }
+
+function abrirApp(pid){
+  PID=pid;
+  $('sc-prov').classList.remove('open');
+  $('app-header').style.display='flex'; $('app-main').style.display='block';
+  var isAdmin=_usuarioLogado&&_usuarioLogado.tipo==='administrador';
+  $('header-username').textContent=_usuarioLogado?_usuarioLogado.nome:'';
+  $('header-role-badge').textContent=isAdmin?'Admin':'Operador';
+  $('header-role-badge').className='role-badge '+(isAdmin?'role-admin':'role-operador');
+  $('header-user-info').style.display='flex';
+  $('nav-btn-usuarios').style.display=isAdmin?'':'none';
+  $('btn-trocar').style.display=isAdmin?'':'none';
+  showPage('registro',document.querySelector('#main-nav button'));
+  loadCfg();
+  var n=new Date(); $('sel-mes').value=pad(n.getMonth()+1); $('sel-ano').value=n.getFullYear();
+  loadMonth(); updateTop();
+}
+
+/* ═══════════════════════════════
+   NAV
+═══════════════════════════════ */
+function showPage(name,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('#main-nav button').forEach(b=>b.classList.remove('active'));
+  var page=$('page-'+name); if(page) page.classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(name==='recibo')    buildRecibo();
+  if(name==='historico') buildHist();
+  if(name==='usuarios')  renderUsuarios();
+}
+
+/* ═══════════════════════════════
+   ALTERAR SENHA
+═══════════════════════════════ */
+function abrirAltSenha(){ $('i-a0').value=''; $('i-a1').value=''; $('i-a2').value=''; $('e-alt').textContent=''; $('modal-alt-senha').classList.add('open'); }
+function fecharAltSenha(){ $('modal-alt-senha').classList.remove('open'); }
+function alterarSenha(){
+  var a0=$('i-a0').value, a1=$('i-a1').value, a2=$('i-a2').value, err=$('e-alt');
+  var lista=_getUsuarios(), u=lista.find(function(x){ return _usuarioLogado&&x.id===_usuarioLogado.id; });
+  if(!u){ err.textContent='Usuário não encontrado.'; return; }
+  if(u.senhaHash!==_hashSenha(a0)){ err.textContent='Senha atual incorreta.'; return; }
+  if(a1.length<4){ err.textContent='Mínimo 4 caracteres.'; return; }
+  if(a1!==a2){ err.textContent='As senhas não coincidem.'; return; }
+  u.senhaHash=_hashSenha(a1); _setUsuarios(lista, null); _usuarioLogado.senhaHash=u.senhaHash;
+  fecharAltSenha(); toast('✓ Senha alterada!');
+}
+
+/* ═══════════════════════════════
+   PRESTADORES
+═══════════════════════════════ */
+function renderProv(){
+  var list=$('prov-lista'), provs=getProvs();
+  var isAdmin=_usuarioLogado&&_usuarioLogado.tipo==='administrador';
+  if(!provs.length){ list.innerHTML='<div class="prov-vazio">Nenhum prestador cadastrado.<br>Preencha o formulário abaixo.</div>'; return; }
+  list.innerHTML=provs.map(p=>{
+    // Exibe CPF descriptografado na listagem
+    var cpfVis=decField(p.cpf)||'—';
+    return `<div class="prov-item">
+      <div class="prov-info">
+        <div class="prov-nome">${p.nome||'(sem nome)'}</div>
+        <div class="prov-meta">${cpfVis} · ${p.empresa||'—'} · R$ ${Number(p.tar||20).toFixed(2).replace('.',',')}/h</div>
+      </div>
+      <button class="pbtn pbtn-sel" onclick="selProv('${p.id}')">▶ Selecionar</button>
+      ${isAdmin?`<button class="pbtn pbtn-edt" onclick="editProv('${p.id}')">Editar</button>
+      <button class="pbtn pbtn-del" onclick="delProv('${p.id}')">Excluir</button>`:''}
+    </div>`;
+  }).join('');
+}
+
+function salvarPrestador(){
+  var id=$('pf-id').value, nome=$('pf-nome').value.trim();
+  if(!nome){ toast('Informe o nome.','var(--red)'); return; }
+  var cpfRaw=$('pf-cpf').value.trim();
+  if(cpfRaw){
+    if(!validarCpfCnpjField($('pf-cpf'),'pf-cpf-hint')){ toast('CPF/CNPJ inválido.','var(--red)'); return; }
+  }
+  var d={
+    id: id||('p'+Date.now()), nome,
+    cpf: encField(cpfRaw),          // 🔒 armazenado criptografado
+    empresa: $('pf-empresa').value.trim(),
+    tar: parseFloat($('pf-tarifa').value)||20,
+    hdia: parseFloat($('pf-hdia').value)||8,
+    pix: encField($('pf-pix').value.trim()), // 🔒
+    ent: $('pf-ent').value||'09:00', sai: $('pf-sai').value||'18:00',
+    ai:  $('pf-ai').value||'12:00',  af:  $('pf-af').value||'13:00',
+  };
+  var list=getProvs();
+  if(id){ var i=list.findIndex(x=>x.id===id); if(i>=0)list[i]=d; else list.push(d); }
+  else list.push(d);
+  saveProvs(list); cancelarForm(); renderProv(); toast('✓ Prestador salvo!');
+}
+
+function editProv(id){
+  var p=getProvs().find(x=>x.id===id); if(!p) return;
+  $('pf-id').value=p.id; $('pf-nome').value=p.nome||'';
+  $('pf-cpf').value=decField(p.cpf)||'';  // descriptografa para exibir
+  $('pf-empresa').value=p.empresa||''; $('pf-tarifa').value=p.tar||20; $('pf-hdia').value=p.hdia||8;
+  $('pf-pix').value=decField(p.pix)||'';  // descriptografa para exibir
+  $('pf-ent').value=p.ent||'09:00'; $('pf-sai').value=p.sai||'18:00';
+  $('pf-ai').value=p.ai||'12:00'; $('pf-af').value=p.af||'13:00';
+  $('pf-titulo').textContent='✏️ Editar Prestador';
+}
+
+function delProv(id){
+  var p=getProvs().find(x=>x.id===id);
+  if(!confirm(`Excluir "${p?.nome}"?`)) return;
+  saveProvs(getProvs().filter(x=>x.id!==id)); renderProv();
+}
+
+function cancelarForm(){
+  ['pf-id','pf-nome','pf-cpf','pf-empresa','pf-pix','pf-cpf-hint'].forEach(function(i){ if($(i)) $(i).value||( $(i).textContent=''); if($(i)&&$(i).tagName==='INPUT') $(i).value=''; });
+  $('pf-cpf-hint').textContent=''; $('pf-tarifa').value='20'; $('pf-hdia').value='8';
+  $('pf-ent').value='09:00'; $('pf-sai').value='18:00'; $('pf-ai').value='12:00'; $('pf-af').value='13:00';
+  $('pf-titulo').textContent='➕ Novo Prestador';
+}
+
+function selProv(id){ abrirApp(id); }
+
+/* ═══════════════════════════════
+   USUÁRIOS
+═══════════════════════════════ */
+function selectTipo(tipo){
+  document.querySelectorAll('input[name=usr-tipo]').forEach(function(r){ r.checked=r.value===tipo; });
+  $('tipo-opt-admin').classList.toggle('selected',tipo==='administrador');
+  $('tipo-opt-operador').classList.toggle('selected',tipo==='operador');
+  $('usr-vinculo-field').style.display=tipo==='operador'?'':'none';
+  if(tipo==='operador') popularSelectPrestadores('usr-prestador','');
+}
+
+function popularSelectPrestadores(selId, selectedId){
+  var sel=$(selId); if(!sel) return;
+  var provs=getProvs();
+  sel.innerHTML='<option value="">— Selecione —</option>';
+  provs.forEach(function(p){ sel.innerHTML+=`<option value="${p.id}"${p.id===selectedId?' selected':''}>${p.nome}</option>`; });
+}
+
+function addUsuario(){
+  var nome=$('usr-nome').value.trim(), senha=$('usr-senha').value, senha2=$('usr-senha2').value;
+  var tipo=document.querySelector('input[name=usr-tipo]:checked')?.value||'administrador';
+  var prestadorId=tipo==='operador'?$('usr-prestador').value:null;
+  if(!nome){ toast('Informe o nome de usuário.','#c04a3a'); return; }
+  if(senha.length<4){ toast('Senha: mínimo 4 caracteres.','#c04a3a'); return; }
+  if(senha!==senha2){ toast('As senhas não coincidem.','#c04a3a'); return; }
+  if(tipo==='operador'&&!prestadorId){ toast('Selecione o prestador vinculado.','#c04a3a'); return; }
+  var lista=_getUsuarios();
+  if(lista.find(function(u){ return u.nome.toLowerCase()===nome.toLowerCase(); })){ toast('Usuário já existe.','#c04a3a'); return; }
+  lista.push({id:Date.now().toString(36),nome,senhaHash:_hashSenha(senha),tipo,prestadorId:prestadorId||null});
+  toast('💾 Salvando…','#3a6f98');
+  _setUsuarios(lista,function(){ toast('✓ Usuário cadastrado e sincronizado!'); });
+  $('usr-nome').value=''; $('usr-senha').value=''; $('usr-senha2').value='';
+  selectTipo('administrador'); renderUsuarios();
+}
+
+function delUsuario(id){
+  var lista=_getUsuarios();
+  if(lista.length<=1){ toast('Deve haver ao menos um usuário.','#c04a3a'); return; }
+  var alvo=lista.find(function(u){ return u.id===id; });
+  if(_usuarioLogado&&alvo&&alvo.id===_usuarioLogado.id){ toast('Não é possível remover o usuário logado.','#c04a3a'); return; }
+  if(!confirm('Remover usuário "'+alvo?.nome+'"?')) return;
+  toast('💾 Removendo…','#3a6f98');
+  _setUsuarios(lista.filter(function(u){ return u.id!==id; }), function(){ toast('Usuário removido.'); });
+  renderUsuarios();
+}
+
+function renderUsuarios(){
+  var lista=_getUsuarios(), el=$('lista-usuarios'), provs=getProvs();
+  if(!lista.length){ el.innerHTML='<div class="empty"><span class="ico">🔐</span>Nenhum usuário</div>'; return; }
+  var h='';
+  lista.forEach(function(u){
+    var isMe=_usuarioLogado&&u.id===_usuarioLogado.id;
+    var tipoClass=u.tipo==='administrador'?'role-admin':'role-operador';
+    var tipoLabel=u.tipo==='administrador'?'👑 Administrador':'👤 Operador';
+    var provNome='';
+    if(u.tipo==='operador'&&u.prestadorId){ var pv=provs.find(function(p){ return p.id===u.prestadorId; }); provNome=pv?' · 📋 '+pv.nome:' · ⚠ Prestador não encontrado'; }
+    h+='<div class="user-item"><div style="display:flex;justify-content:space-between;width:100%;align-items:center;">'
+      +'<div><div class="uname">'+u.nome+(isMe?' <span style="font-size:10px;color:var(--gold);">(você)</span>':'')+'</div>'
+      +'<div class="urole" style="display:flex;align-items:center;gap:5px;margin-top:2px;">'
+      +'<span class="role-badge '+tipoClass+'">'+tipoLabel+'</span>'
+      +(provNome?'<span style="font-size:11px;color:var(--text-dim);">'+provNome+'</span>':'')
+      +'</div></div>'
+      +(isMe?'<span style="font-size:11px;color:var(--text-dim);">—</span>'
+        :'<div style="display:flex;gap:5px;">'
+        +'<button class="btn btn-ghost btn-sm" onclick="editarUsuario(\''+u.id+'\')">✏️ Editar</button>'
+        +'<button class="btn btn-danger" onclick="delUsuario(\''+u.id+'\')">✕</button></div>')
+      +'</div></div>';
+  });
+  el.innerHTML=h;
+}
+
+function editarUsuario(id){
+  var lista=_getUsuarios(), u=lista.find(function(x){ return x.id===id; }); if(!u) return;
+  var overlay=$('modal-edit-usr');
+  if(!overlay){ overlay=document.createElement('div'); overlay.id='modal-edit-usr'; overlay.className='modal-overlay'; document.body.appendChild(overlay); }
+  overlay.innerHTML=`
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:26px 30px;max-width:420px;width:92%;box-shadow:0 8px 40px rgba(0,0,0,.15);">
+      <div style="font-family:'Playfair Display',serif;font-size:18px;color:var(--gold);margin-bottom:3px;">✏️ Editar Usuário</div>
+      <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;">Usuário: <strong style="color:var(--cream);">${u.nome}</strong></p>
+      <div class="field"><label>Tipo de Acesso</label>
+        <div class="tipo-grid">
+          <label class="tipo-opt ${u.tipo==='administrador'?'selected':''}" id="eo-tipo-admin" onclick="eoSelectTipo('administrador')">
+            <input type="radio" name="eo-tipo" value="administrador" ${u.tipo==='administrador'?'checked':''}>
+            <div class="tipo-info"><strong>👑 Administrador</strong><span>Acesso total</span></div>
+          </label>
+          <label class="tipo-opt ${u.tipo==='operador'?'selected':''}" id="eo-tipo-operador" onclick="eoSelectTipo('operador')">
+            <input type="radio" name="eo-tipo" value="operador" ${u.tipo==='operador'?'checked':''}>
+            <div class="tipo-info"><strong>👤 Operador</strong><span>Prestador vinculado</span></div>
+          </label>
+        </div>
+      </div>
+      <div class="field" id="eo-vinculo-field" style="${u.tipo==='operador'?'':'display:none;'}">
+        <label>Prestador Vinculado</label>
+        <select id="eo-prestador"></select>
+      </div>
+      <div style="display:flex;gap:9px;margin-top:18px;justify-content:flex-end;">
+        <button class="btn btn-ghost" onclick="document.getElementById('modal-edit-usr').classList.remove('open')">Cancelar</button>
+        <button class="btn btn-gold" onclick="salvarEdicaoUsuario('${id}')">✓ Salvar</button>
+      </div>
+    </div>`;
+  overlay.classList.add('open');
+  popularSelectPrestadores('eo-prestador', u.prestadorId||'');
+}
+
+function eoSelectTipo(tipo){
+  document.querySelectorAll('input[name=eo-tipo]').forEach(function(r){ r.checked=r.value===tipo; });
+  $('eo-tipo-admin').classList.toggle('selected',tipo==='administrador');
+  $('eo-tipo-operador').classList.toggle('selected',tipo==='operador');
+  $('eo-vinculo-field').style.display=tipo==='operador'?'':'none';
+}
+
+function salvarEdicaoUsuario(id){
+  var lista=_getUsuarios(), u=lista.find(function(x){ return x.id===id; }); if(!u) return;
+  var tipo=document.querySelector('input[name=eo-tipo]:checked')?.value||'administrador';
+  var prestadorId=tipo==='operador'?$('eo-prestador')?.value:null;
+  if(tipo==='operador'&&!prestadorId){ toast('Selecione o prestador vinculado.','#c04a3a'); return; }
+  u.tipo=tipo; u.prestadorId=prestadorId||null;
+  $('modal-edit-usr').classList.remove('open');
+  toast('💾 Salvando…','#3a6f98');
+  _setUsuarios(lista, function(){ toast('✓ Usuário atualizado!'); });
+  renderUsuarios();
+  if(_usuarioLogado&&_usuarioLogado.id===id){ _usuarioLogado.tipo=tipo; _usuarioLogado.prestadorId=prestadorId||null; }
+}
+
+/* ═══════════════════════════════
+   CONFIG DO PRESTADOR
+═══════════════════════════════ */
+const cfgK  = ()    => `mei_cfg_${PID}`;
+const mKey  = (m,y) => `mei_${PID}_${y}_${m}`;
+
+const getCfg = () => {
+  var p=getProvs().find(x=>x.id===PID)||{};
+  var s=JSON.parse(localStorage.getItem(cfgK())||'{}');
+  return {
+    nome:  s.nome   ??p.nome   ??'',
+    emp:   s.emp    ??p.empresa??'',
+    tar:   s.tar    ??p.tar    ??20,
+    hdia:  s.hdia   ??p.hdia   ??8,
+    cpf:   s.cpf    ??(p.cpf?decField(p.cpf):''),  // descriptografa ao ler
+    pix:   s.pix    ??(p.pix?decField(p.pix):''),  // descriptografa ao ler
+    ent:   s.ent    ??p.ent    ??'09:00',
+    sai:   s.sai    ??p.sai    ??'18:00',
+    ai:    s.ai     ??p.ai     ??'12:00',
+    af:    s.af     ??p.af     ??'13:00',
+  };
+};
+
+function loadCfg(){
+  var c=getCfg();
+  $('c-nome').value=c.nome; $('c-emp').value=c.emp;
+  $('c-tar').value=c.tar;   $('c-hd').value=c.hdia;
+  $('c-cpf').value=c.cpf;   $('c-pix').value=c.pix;
+  $('r-ent').value=c.ent;   $('r-sai').value=c.sai;
+  $('r-ai').value=c.ai;     $('r-af').value=c.af;
+  updateTop();
+}
+
+function saveConfig(){
+  var cpfRaw=$('c-cpf').value.trim(), pixRaw=$('c-pix').value.trim();
+  var obj={
+    nome:$('c-nome').value, emp:$('c-emp').value,
+    tar:parseFloat($('c-tar').value)||20, hdia:parseFloat($('c-hd').value)||8,
+    cpf: cpfRaw,   // armazenado em texto puro no cfg local (no prestador é criptografado)
+    pix: pixRaw,
+    ent:$('r-ent').value, sai:$('r-sai').value, ai:$('r-ai').value, af:$('r-af').value,
+  };
+  localStorage.setItem(cfgK(),JSON.stringify(obj));
+  // Sincroniza no array de prestadores (com criptografia)
+  var list=getProvs(), i=list.findIndex(x=>x.id===PID);
+  if(i>=0){
+    list[i]={...list[i],nome:obj.nome,empresa:obj.emp,tar:obj.tar,hdia:obj.hdia,
+             cpf:encField(cpfRaw), pix:encField(pixRaw),
+             ent:obj.ent,sai:obj.sai,ai:obj.ai,af:obj.af};
+    saveProvs(list);
+  }
+}
+
+function saveConfigValidated(){
+  var cpfRaw=$('c-cpf').value.trim();
+  if(cpfRaw&&!validarCpfCnpjField($('c-cpf'),'c-cpf-hint')){ toast('CPF/CNPJ inválido.','var(--red)'); return; }
+  saveConfig(); toast('✓ Configurações salvas!');
+}
+
+function updateTop(){
+  var c=getCfg();
+  $('header-prov-nome').textContent=c.nome?'· '+c.nome:'';
+}
+
+/* ═══════════════════════════════
+   DADOS DO MÊS (localStorage por prestador)
+═══════════════════════════════ */
+const getMD  = (m,y)      => JSON.parse(localStorage.getItem(mKey(m,y))||'{}');
+const saveMD = (m,y,data) => localStorage.setItem(mKey(m,y),JSON.stringify(data));
+
+/* ═══════════════════════════════
+   PAGAMENTOS ANTECIPADOS
+═══════════════════════════════ */
+const preKey = (m,y) => `mei_pre_${PID}_${y}_${m}`;
+
+function getPrePayments(m,y){
+  try{ return JSON.parse(localStorage.getItem(preKey(m,y))||'[]'); }
+  catch(e){ return []; }
+}
+function savePrePayments(){
+  var mes=$('sel-mes').value, ano=parseInt($('sel-ano').value);
+  var arr=[];
+  for(var i=1;i<=3;i++){
+    arr.push({
+      data:$('pre-data-'+i)?$('pre-data-'+i).value:'',
+      val: parseFloat($('pre-val-'+i)?$('pre-val-'+i).value:0)||0
+    });
+  }
+  localStorage.setItem(preKey(mes,ano),JSON.stringify(arr));
+  // recalc totals
+  var total=arr.reduce(function(s,a){ return s+(a.val||0); },0);
+  if($('pre-total')) $('pre-total').textContent=fmtM(total);
+  renderSummaryBar(mes,ano,getMD(mes,ano));
+}
+
+function loadPrePayments(mes,ano){
+  var arr=getPrePayments(mes,ano);
+  var total=0;
+  for(var i=1;i<=3;i++){
+    var item=arr[i-1]||{data:'',val:0};
+    if($('pre-data-'+i)) $('pre-data-'+i).value=item.data||'';
+    if($('pre-val-'+i))  $('pre-val-'+i).value=item.val||'';
+    total+=parseFloat(item.val)||0;
+  }
+  if($('pre-total')) $('pre-total').textContent=fmtM(total);
+}
+
+function renderSummaryBar(mes,ano,data){
+  var c=getCfg(), tar=c.tar||20, hdia=c.hdia||8;
+  var hj=new Date();
+  var hoje=hj.getDate(), hm=pad(hj.getMonth()+1), ha=hj.getFullYear();
+  var isCurrentMonth=(mes===hm&&ano===ha);
+
+  // Valor trabalhado até hoje (se mês atual) ou total do mês
+  var limitDay=isCurrentMonth?hoje:DIM(mes,ano);
+  var tH=0,tV=0,tR=0;
+  for(var d=1;d<=limitDay;d++){
+    var dw=DOW(d,mes,ano), key=pad(d), day=data[key]||{};
+    if(dw>0&&dw<6&&!day.feriado){
+      var rv=calcDay(day,hdia,tar);
+      tH+=rv.h; tV+=rv.v;
+      tR+=parseFloat(day.rec)||0;
+    }
+  }
+
+  // Somar adiantamentos
+  var pre=getPrePayments(mes,ano);
+  var tPre=pre.reduce(function(s,a){ return s+(parseFloat(a.val)||0); },0);
+  var totalRec=tR+tPre;
+  var diff=tV-totalRec;
+
+  if($('res-trabalhado')){ $('res-trabalhado').textContent=fmtM(tV); }
+  if($('res-trabalhado-h')){ $('res-trabalhado-h').textContent=fmtH(tH)+' horas'+(isCurrentMonth?' (até hoje)':' (mês completo)'); }
+  if($('res-recebido')){ $('res-recebido').textContent=fmtM(totalRec); }
+  if($('res-recebido-sub')){ $('res-recebido-sub').textContent='lançamentos ('+fmtM(tR)+') + adiant. ('+fmtM(tPre)+')'; }
+  if($('res-diferenca')){
+    $('res-diferenca').textContent=fmtM(Math.abs(diff));
+    $('res-diferenca').style.color=diff>0.01?'var(--red)':(diff<-0.01?'var(--green)':'var(--blue)');
+  }
+  if($('res-diferenca-sub')){
+    $('res-diferenca-sub').textContent=diff>0.01?'⚠ ainda a receber':diff<-0.01?'✅ saldo positivo':'✅ em dia';
+  }
+}
+
+function loadMonth(){
+  var mes=$('sel-mes').value, ano=parseInt($('sel-ano').value);
+  var c=getCfg(), n=DIM(mes,ano), data=getMD(mes,ano), changed=false;
+  for(var d=1;d<=n;d++){
+    var dw=DOW(d,mes,ano), key=pad(d);
+    if(!data[key]){data[key]={};changed=true;}
+    if(dw>0&&dw<6&&!data[key].hasOwnProperty('ent')){ data[key]={ent:c.ent,sai:c.sai,ai:c.ai,af:c.af};changed=true; }
+  }
+  if(changed) saveMD(mes,ano,data);
+  loadPrePayments(mes,ano);
+  renderTable(mes,ano,data);
+}
+
+function applyDef(){
+  var mes=$('sel-mes').value, ano=parseInt($('sel-ano').value);
+  var c=getCfg(), n=DIM(mes,ano), data=getMD(mes,ano);
+  for(var d=1;d<=n;d++){
+    var dw=DOW(d,mes,ano), key=pad(d), day=data[key]||{};
+    if(dw>0&&dw<6&&!day.feriado){
+      if(!day.entL) day.ent=c.ent; if(!day.saiL) day.sai=c.sai;
+      if(!day.aiL)  day.ai=c.ai;   if(!day.afL)  day.af=c.af;
+      data[key]=day;
+    }
+  }
+  saveMD(mes,ano,data); renderTable(mes,ano,data);
+}
+
+function calcDay(day,hdia,tar){
+  var ent=day.ent||'',sai=day.sai||'',ai=day.ai||'',af=day.af||'';
+  if(!ent||!sai) return{h:0,v:0};
+  var brk=dH(ai,af)||0, h=dH(ent,sai)-brk;
+  return{h:Math.max(0,h),v:Math.max(0,h)*tar};
+}
+
+function renderTable(mes,ano,data){
+  var c=getCfg(), tar=c.tar||20, hdia=c.hdia||8, n=DIM(mes,ano);
+  var hj=new Date(), hd=pad(hj.getDate()), hm=pad(hj.getMonth()+1), ha=hj.getFullYear();
+  var isHoje=function(d){ return pad(d)===hd&&mes===hm&&ano===ha; };
+  var tH=0,tV=0,tR=0,tD=0,rows=[];
+  for(var d=1;d<=n;d++){
+    var dw=DOW(d,mes,ano), key=pad(d), day=data[key]||{};
+    var isFer=!!day.feriado, isWE=dw===0||dw===6;
+    if(isWE||isFer){rows.push({d,dw,key,day,skip:true});continue;}
+    var rv=calcDay(day,hdia,tar), h=rv.h, v=rv.v;
+    var diff=h-hdia, rec=parseFloat(day.rec)||0;
+    tH+=h;tV+=v;tR+=rec;if(h>0)tD++;
+    rows.push({d,dw,key,day,h,v,diff,rec,skip:false});
+  }
+  var runR=0;
+  rows.forEach(function(r){ if(!r.skip){runR+=r.rec||0;r.acR=runR;} });
+
+  $('tbl-body').innerHTML=rows.map(function(row){
+    var d=row.d,dw=row.dw,key=row.key,day=row.day,h=row.h,v=row.v,diff=row.diff,rec=row.rec,skip=row.skip,acR=row.acR;
+    var dayName=DIAS[dw], dn2cls=dw===6?'sat':dw===0?'sun':'';
+    var cls=isHoje(d)?'hj':(dw===6?'we sat':(dw===0?'we sun':''));
+    if(skip){
+      var isFer=day.feriado, isWE=dw===0||dw===6;
+      return `<tr class="${isFer?'fer':isWE?'we':''}">
+        <td style="color:var(--text-dim);">${d}</td>
+        <td><span class="dn ${dn2cls}">${dayName}</span></td>
+        <td>${pad(d)}/${mes}</td>
+        <td colspan="11" style="text-align:center;">
+          <span class="badge ${isFer?'badge-red':'badge-gold'}">${isFer?'🚫 Feriado':'🗓 Fim de Semana'}</span>
+          ${!isFer?`<label style="margin-left:8px;font-size:10px;color:var(--text-dim);cursor:pointer;"><input type="checkbox" onchange="togFer('${key}',true)" style="width:12px;height:12px;"> feriado</label>`:''}
+          ${isFer?`<button class="btn btn-ghost btn-sm" style="margin-left:6px;" onclick="togFer('${key}',false)">✕</button>`:''}
+        </td>
+      </tr>`;
+    }
+    var tipo=h===0?'<span class="badge badge-gold">—</span>':
+      (diff>0.01?`<span class="badge badge-green">+${fmtH(diff)}</span>`:
+      (diff<-0.01?`<span class="badge badge-red">${fmtH(diff)}</span>`:
+      `<span class="badge badge-blue">Normal</span>`));
+    var difCol=h===0?'<span class="dz">—</span>':
+      (diff>0.01?`<span class="dp">+${fmtH(diff)}</span>`:
+      (diff<-0.01?`<span class="dn2">${fmtH(diff)}</span>`:`<span class="dz">0:00</span>`));
+    return `<tr class="${cls}">
+      <td style="color:var(--text-dim);">${d}</td>
+      <td><span class="dn ${dn2cls}">${dayName}</span></td>
+      <td>${pad(d)}/${mes}</td>
+      <td><input class="ti" type="time" value="${day.ent||''}" onchange="setField('${key}','ent',this.value,true)"></td>
+      <td><input class="ti" type="time" value="${day.sai||''}" onchange="setField('${key}','sai',this.value,true)"></td>
+      <td><input class="ti" type="time" value="${day.ai||''}"  onchange="setField('${key}','ai',this.value,true)"></td>
+      <td><input class="ti" type="time" value="${day.af||''}"  onchange="setField('${key}','af',this.value,true)"></td>
+      <td><span class="hd">${h>0?fmtH(h):'—'}</span></td>
+      <td><span class="vd">${h>0?fmtM(v):'—'}</span></td>
+      <td>${tipo}</td>
+      <td>${difCol}</td>
+      <td><input class="obs-inp" type="text" value="${day.obs||''}" placeholder="obs…" onchange="setField('${key}','obs',this.value,false)"></td>
+      <td><input class="ti" type="number" value="${day.rec||''}" min="0" step="0.01" placeholder="0,00" style="width:80px;" onchange="setField('${key}','rec',this.value,false)"></td>
+      <td style="color:${(acR||0)>0?'var(--gold)':'var(--text-dim)'};">${(acR||0)>0?fmtM(acR):'—'}</td>
+    </tr>`;
+  }).join('');
+
+  var aR=tV-tR;
+  $('tbl-foot').innerHTML=`<tr style="background:var(--surface2);">
+    <td colspan="7" style="text-align:right;font-weight:700;font-size:10px;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;">TOTAL DO MÊS</td>
+    <td><span class="hd">${fmtH(tH)}</span></td>
+    <td><span class="vd">${fmtM(tV)}</span></td>
+    <td colspan="3" style="font-size:10px;color:var(--text-dim);">${tD} dias trabalhados</td>
+    <td style="color:var(--gold);font-weight:700;font-family:'Playfair Display',serif;font-size:12px;">${fmtM(tR)}</td>
+    <td style="color:${aR>0?'var(--red)':'var(--green)'};font-weight:700;font-family:'Playfair Display',serif;font-size:12px;">${fmtM(aR)}</td>
+  </tr>`;
+
+  $('cards').innerHTML=`
+    <div class="stat-box"><div class="val blue">${fmtH(tH)}</div><div class="lbl">⏱ Total de Horas</div></div>
+    <div class="stat-box"><div class="val green">${fmtM(tV)}</div><div class="lbl">💰 Valor Bruto</div></div>
+    <div class="stat-box"><div class="val" style="color:var(--gold);">${fmtM(tR)}</div><div class="lbl">✅ Já Recebido</div></div>
+    <div class="stat-box"><div class="val ${aR>0?'red':'green'}">${fmtM(aR)}</div><div class="lbl">📌 A Receber</div></div>
+    <div class="stat-box"><div class="val blue">${tD}</div><div class="lbl">📅 Dias Trabalhados</div></div>
+  `;
+  renderSummaryBar(mes,ano,data);
+}
+
+function setField(key,field,val,isTime){
+  var mes=$('sel-mes').value, ano=parseInt($('sel-ano').value);
+  var data=getMD(mes,ano);
+  if(!data[key]) data[key]={};
+  data[key][field]=val;
+  if(isTime){ var lk={ent:'entL',sai:'saiL',ai:'aiL',af:'afL'}; if(lk[field]) data[key][lk[field]]=true; }
+  saveMD(mes,ano,data); renderTable(mes,ano,data);
+}
+
+function togFer(key,val){
+  var mes=$('sel-mes').value, ano=parseInt($('sel-ano').value);
+  var data=getMD(mes,ano);
+  if(!data[key]) data[key]={};
+  data[key].feriado=val;
+  if(val){data[key].ent='';data[key].sai='';data[key].ai='';data[key].af='';}
+  saveMD(mes,ano,data); renderTable(mes,ano,data);
+}
+
+function recalc(){ var mes=$('sel-mes').value, ano=parseInt($('sel-ano').value); renderTable(mes,ano,getMD(mes,ano)); }
+
+/* ═══════════════════════════════
+   RECIBO
+═══════════════════════════════ */
+function buildRecibo(){
+  var mes=$('sel-mes').value, ano=parseInt($('sel-ano').value);
+  var data=getMD(mes,ano), c=getCfg(), tar=c.tar||20, hdia=c.hdia||8, n=DIM(mes,ano);
+  var tH=0,tV=0,tR=0;
+  for(var d=1;d<=n;d++){
+    var dw=DOW(d,mes,ano), day=data[pad(d)]||{};
+    if(dw>0&&dw<6&&!day.feriado){ var rv=calcDay(day,hdia,tar); tH+=rv.h; tV+=rv.v; tR+=parseFloat(day.rec)||0; }
+  }
+  var pre=getPrePayments(mes,ano);
+  var tPre=pre.reduce(function(s,a){ return s+(parseFloat(a.val)||0); },0);
+  var totalRecebido=tR+tPre;
+  var aR=tV-totalRecebido, hj=new Date();
+  var emissao=pad(hj.getDate())+'/'+pad(hj.getMonth()+1)+'/'+hj.getFullYear();
+  var preLinhas='';
+  pre.forEach(function(p,i){
+    if(p.val>0){
+      var dtFmt=p.data?p.data.split('-').reverse().join('/'):'—';
+      preLinhas+=`<div class="recibo-row"><span class="rkey">Adiantamento ${i+1} (${dtFmt})</span><span class="rval" style="color:var(--green)">${fmtM(p.val)}</span></div>`;
+    }
+  });
+  $('recibo-body').innerHTML=`
+    <div class="recibo-row"><span class="rkey">Prestador</span><span class="rval">${c.nome||'—'}</span></div>
+    <div class="recibo-row"><span class="rkey">CNPJ / CPF</span><span class="rval">${c.cpf||'—'}</span></div>
+    <div class="recibo-row"><span class="rkey">Empresa Contratante</span><span class="rval">${c.emp||'—'}</span></div>
+    <div class="recibo-row"><span class="rkey">Competência</span><span class="rval">${MESES[parseInt(mes)-1]} / ${ano}</span></div>
+    <div class="recibo-row"><span class="rkey">Total de Horas</span><span class="rval" style="color:var(--blue)">${fmtH(tH)}</span></div>
+    <div class="recibo-row"><span class="rkey">Tarifa por Hora</span><span class="rval">${fmtM(tar)}</span></div>
+    <div class="recibo-row"><span class="rkey">Valor Bruto</span><span class="rval" style="color:var(--gold)">${fmtM(tV)}</span></div>
+    ${preLinhas}
+    <div class="recibo-row"><span class="rkey">Recebido (lançamentos)</span><span class="rval" style="color:var(--green)">${fmtM(tR)}</span></div>
+    <div class="recibo-row"><span class="rkey">Total Recebido</span><span class="rval" style="color:var(--green)">${fmtM(totalRecebido)}</span></div>
+    <div class="recibo-row"><span class="rkey">PIX / Banco</span><span class="rval">${c.pix||'—'}</span></div>
+    <div class="recibo-row"><span class="rkey">Data de Emissão</span><span class="rval">${emissao}</span></div>
+    <div class="recibo-total"><span class="rt-lbl">Valor a Receber</span><span class="rt-val">${fmtM(aR)}</span></div>
+    <p style="margin-top:36px;color:var(--text-dim);font-size:13px;line-height:1.8">Declaro ter prestado os serviços acima especificados no período de <strong style="color:var(--text)">${MESES[parseInt(mes)-1]}/${ano}</strong>, conforme acordo entre as partes.</p>
+    <div style="margin-top:36px;border-top:1px solid var(--border);padding-top:18px;display:flex;justify-content:space-between;font-size:12px;color:var(--text-dim)">
+      <span>_______________________________<br>Assinatura do Prestador</span>
+      <span>_______________________________<br>Assinatura do Contratante</span>
+    </div>`;
+}
+
+/* ═══════════════════════════════
+   HISTÓRICO
+═══════════════════════════════ */
+function buildHist(){
+  var el=$('hist-list'), ano=parseInt($('sel-ano').value)||new Date().getFullYear();
+  var c=getCfg(), tar=c.tar||20, hdia=c.hdia||8;
+  el.innerHTML='';
+  var anH=0,anV=0,anR=0, rows=[];
+  for(var m=1;m<=12;m++){
+    var mes=pad(m), data=getMD(mes,ano);
+    if(!Object.keys(data).length){rows.push({nome:MESES[m-1],empty:true});continue;}
+    var n=DIM(mes,ano), th=0,tv=0,tr=0,td=0;
+    for(var d=1;d<=n;d++){
+      var dw=DOW(d,mes,ano), day=data[pad(d)]||{};
+      if(dw>0&&dw<6&&!day.feriado){ var rv=calcDay(day,hdia,tar); if(rv.h>0){th+=rv.h;tv+=rv.v;td++;} tr+=parseFloat(day.rec)||0; }
+    }
+    var pre=getPrePayments(mes,ano);
+    var tPre=pre.reduce(function(s,a){ return s+(parseFloat(a.val)||0); },0);
+    var totalR=tr+tPre;
+    anH+=th;anV+=tv;anR+=totalR;
+    rows.push({nome:MESES[m-1],th,tv,tr:totalR,td,aR:tv-totalR,ano});
+  }
+  rows.forEach(function(r){
+    if(r.empty){ el.innerHTML+=`<div class="hist-row" style="opacity:.4"><div class="hm">${r.nome}</div><div style="color:var(--text-dim);font-size:12px;grid-column:2/-1">Sem registros</div></div>`; return; }
+    var pct=anV>0?(r.tv/anV*100):0;
+    el.innerHTML+=`<div class="hist-row">
+      <div class="hm">${r.nome}<br><span style="font-size:11px;color:var(--text-dim);">${r.ano}</span></div>
+      <div class="hv"><div class="hl">Horas</div><div class="hn" style="color:var(--blue)">${fmtH(r.th)}</div></div>
+      <div class="hv"><div class="hl">Valor</div><div class="hn" style="color:var(--green)">${fmtM(r.tv)}</div>
+        <div class="abar"><div class="afill" style="width:${Math.min(100,pct).toFixed(1)}%"></div></div></div>
+      <div class="hv"><div class="hl">Recebido</div><div class="hn" style="color:var(--gold)">${fmtM(r.tr)}</div></div>
+      <div class="hv"><div class="hl">A Receber</div><div class="hn" style="color:${r.aR>0?'var(--red)':'var(--green)'}">${fmtM(r.aR)}</div></div>
+    </div>`;
+  });
+  el.innerHTML+=`<div class="hist-row" style="border:2px solid var(--gold-dim);">
+    <div class="hm" style="color:var(--gold);">TOTAL ${ano}</div>
+    <div class="hv"><div class="hl">Horas</div><div class="hn" style="color:var(--blue)">${fmtH(anH)}</div></div>
+    <div class="hv"><div class="hl">Valor</div><div class="hn" style="color:var(--green)">${fmtM(anV)}</div></div>
+    <div class="hv"><div class="hl">Recebido</div><div class="hn" style="color:var(--gold)">${fmtM(anR)}</div></div>
+    <div class="hv"><div class="hl">Pendente</div><div class="hn" style="color:${(anV-anR)>0?'var(--red)':'var(--green)'}">${fmtM(anV-anR)}</div></div>
+  </div>`;
+}
+
+/* ═══════════════════════════════
+   MISC
+═══════════════════════════════ */
+function clearAll(){
+  if(!confirm('Apagar TODOS os dados deste prestador?\nEsta ação não pode ser desfeita.')) return;
+  var pfx='mei_'+PID+'_';
+  Object.keys(localStorage).filter(k=>k.startsWith(pfx)||k===cfgK()).forEach(k=>localStorage.removeItem(k));
+  loadCfg(); loadMonth(); toast('Dados apagados.');
+}
+
+/* ═══════════════════════════════
+   INIT
+═══════════════════════════════ */
+(async function(){
+  // Carrega dados do GitHub ou local antes de mostrar o login
+  await _loadAll(function(){});
+  _ensureAdminDefault();
+  if(GH.isConfigured()){ setGhStatus('✅ GitHub conectado','var(--green)'); }
+  else { setGhStatus('⚠ Sem GitHub','var(--text-dim)'); }
+  $('login-user').focus();
+})();
+</script>
+</body>
+</html>
